@@ -6,16 +6,12 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.TreeMap;
-import java.util.TreeSet;
 
 public class Test2 {
 
-	private Set<String> compoundWords = new TreeSet<String>();
 	/**
 	 * Reads words from file and puts them in ArrayList
 	 * 
@@ -42,7 +38,7 @@ public class Test2 {
 	 * @param words
 	 * @return map
 	 */
-	private Map<Character, ArrayList<String>> putWordsInMap(List<String> words) {
+	public Map<Character, ArrayList<String>> putWordsInMap(List<String> words) {
 		Map<Character, ArrayList<String>> mappedWords = new TreeMap<>();
 		for (String string : words) {
 			if (!mappedWords.containsKey(string.charAt(0))) {
@@ -60,11 +56,7 @@ public class Test2 {
 	 * @param words
 	 * @param counter
 	 */
-	private void isCompoundWord(String word, String original, Map<Character, ArrayList<String>> words, int counter) {
-		if (word.length() == 0) {
-			//adds compound word to the set of words
-			compoundWords.add(original);
-		} else {
+	private boolean isCompoundWord(String word, Map<Character, ArrayList<String>> words, int counter) {
 			char firstLetter = word.charAt(0);
 			List<String> dictionary = null;
 			if (words.containsKey(firstLetter)) {
@@ -75,43 +67,59 @@ public class Test2 {
 			for (String string : dictionary) {
 				if (string.equals(word) && counter == 0)
 					continue;
-				if (word.startsWith(string)) {
-					int t = counter + 1;
-					isCompoundWord(word.substring(string.length()), original, words, t);
+				else if (word.startsWith(string) && !word.equals(string)) {
+					if (isCompoundWord(word.substring(string.length()), words, counter++)==true){
+						return true;
+					}	
 				}
-
+				else if (string.equals(word) && counter>0) {
+					return true;
+				}
 			}
-
-		}
-
+		return false;
 	}
 
 	/**
-	 * Finds the longest word in set
+	 * Finds the longest word in the list, return and removes it
 	 * @param words
-	 * @return
+	 * @return the longest word
 	 */
-	public String findMax(Set<String> words) {
-		String max = "";
-		for (Iterator<String> it = words.iterator(); it.hasNext();) {
-			String f = it.next();
-			if (f.length() > max.length())
-				max = f;
-
+	private String findTheLongestWord(List<String> words) {
+		String longestString = null;
+		int index = 0;
+		int largestString = words.get(0).length();
+		for (int i = 0; i < words.size(); i++) {
+			if (words.get(i).length() > largestString) {
+				largestString = words.get(i).length();
+				index = i;
+			}
 		}
-		return max;
+		longestString = words.get(index);
+		words.remove(index);
+		return longestString;
 	}
-
+	
+	/**
+	 * Finds the longest compound word
+	 * @param dictionary
+	 * @return word if found compound word, null if not
+	 */
+	public String getTheWord(Map<Character, ArrayList<String>> words, List<String> dictionary) {
+		boolean complex = false;
+		String word = null;
+		while (complex == false && dictionary.size() > 0) {
+			word = findTheLongestWord(dictionary);
+			complex = isCompoundWord(word, words, 0);
+		}
+		return word;
+	}
+	
+	
 	public static void main(String[] args) {
 		Test2 test = new Test2();
 		List<String> words = test.readFile(new File("words.txt"));
 		Map<Character, ArrayList<String>> mappedWords = test.putWordsInMap(words);
-		for (String string : words) {
-			test.isCompoundWord(string, string, mappedWords, 0);
-		}
-		System.out.println(test.compoundWords.size());
-		System.out.println(test.findMax(test.compoundWords));
-		test.compoundWords.remove("ethylenediaminetetraacetates");
-		System.out.println(test.findMax(test.compoundWords));
+		System.out.println(test.getTheWord(mappedWords, words));
+		System.out.println(test.getTheWord(mappedWords, words));
 	}
 }
